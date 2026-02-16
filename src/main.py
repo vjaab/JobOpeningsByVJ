@@ -23,6 +23,7 @@ from src.scrapers.remoteok import RemoteOKScraper
 from src.scrapers.weworkremotely import WeWorkRemotelyScraper
 from src.scrapers.remotive import RemotiveScraper
 from src.scrapers.workingnomads import WorkingNomadsScraper
+from src.scrapers.google_jobs import GoogleJobsScraper
 # Add more scrapers here when implemented
 
 # Setup logging
@@ -72,7 +73,8 @@ def run_job_scraping():
             RemoteOKScraper(),
             WeWorkRemotelyScraper(),
             RemotiveScraper(),
-            WorkingNomadsScraper()
+            WorkingNomadsScraper(),
+            GoogleJobsScraper()
         ]
         
         all_jobs = []
@@ -154,8 +156,9 @@ def run_job_scraping():
         # But if Remote is overflowing (>15), we cap at 15.
         # What if India is overflowing? We cap at remaining.
         
-        # Combine
-        final_jobs = final_remote_jobs + final_india_jobs
+
+        # Since limits are removed, we just take all unique_jobs
+        final_jobs = unique_jobs
         
         # Mark as posted
         for job in final_jobs:
