@@ -191,8 +191,34 @@ def run_job_scraping():
         header = f"🚀 *Daily Tech Jobs Digest by VJ — {date_str}*\n\n"
         footer = f"\n🌍 {len(display_remote)} Remote | 🇮🇳 {len(display_india)} India | Total: {len(final_jobs)} jobs"
 
+        
         messages = []
         current_message = header
+        
+        def format_job_entry(job):
+            # Truncate title
+            title = job['role']
+            if len(title) > 60:
+                title = title[:57] + "..."
+            
+            flag = "🌍" if "remote" in job['location'].lower() else "🇮🇳" # Or use job.get('flag')
+            
+            # Calculate posted time string
+            posted_str = get_posted_time_str(job.get('posted_dt'))
+            
+            # Basic salary if missing
+            salary = job.get('salary', 'Not disclosed')
+            if not salary: salary = 'Not disclosed'
+
+            return (
+                f"*{title}*\n"
+                f"🏢 {job['company']}\n"
+                f"{flag} {job['location']}\n"
+                f"🕐 {posted_str}\n"
+                f"💰 {salary}\n"
+                f"🔗 [Apply Now]({job['url']})\n"
+                f"🏷️ {job['source']}\n\n"
+            )
 
         def add_text_to_messages(new_text, section_title=None, is_footer=False, is_job=False):
             nonlocal current_message, messages
