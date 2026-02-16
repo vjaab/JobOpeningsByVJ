@@ -136,28 +136,11 @@ def run_job_scraping():
         remote_candidates = [j for j in unique_jobs if not is_india_role(j) and "remote" in j['location'].lower()]
 
 
-        final_remote_jobs = []
-        final_india_jobs = []
-        
-        # Logic: 
-        # If remote > 15, take 15. If < 15, take all.
-        num_remote_slots = min(len(remote_candidates), MAX_REMOTE_JOBS)
-        final_remote_jobs = remote_candidates[:num_remote_slots]
-        
-        # Remaining slots for India
-        remaining_slots = MAX_JOBS_PER_DAY - len(final_remote_jobs)
-        num_india_slots = min(len(india_candidates), remaining_slots)
-        final_india_jobs = india_candidates[:num_india_slots]
-        
-        # If we still have slots and more remote jobs, fill? 
-        # User said: "If remote jobs available < 15, fill remaining slots with India roles"
-        # Implies we favor filling slots with India if Remote is lacking.
-        # But if Remote is overflowing (>15), we cap at 15.
-        # What if India is overflowing? We cap at remaining.
-        
-
         # Since limits are removed, we just take all unique_jobs
-        final_jobs = unique_jobs
+        # But we still sort/split for display purposes
+        
+        # Combine everything (no capping logic needed anymore)
+        final_jobs = india_candidates + remote_candidates
         
         # Mark as posted
         for job in final_jobs:
