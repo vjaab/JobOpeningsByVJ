@@ -21,6 +21,8 @@ from src.utils.db import init_db, is_job_posted, mark_job_posted
 # Import scrapers
 from src.scrapers.remoteok import RemoteOKScraper
 from src.scrapers.weworkremotely import WeWorkRemotelyScraper
+from src.scrapers.remotive import RemotiveScraper
+from src.scrapers.workingnomads import WorkingNomadsScraper
 # Add more scrapers here when implemented
 
 # Setup logging
@@ -68,7 +70,9 @@ def run_job_scraping():
         # 1. Scrape
         scrapers = [
             RemoteOKScraper(),
-            WeWorkRemotelyScraper()
+            WeWorkRemotelyScraper(),
+            RemotiveScraper(),
+            WorkingNomadsScraper()
         ]
         
         all_jobs = []
