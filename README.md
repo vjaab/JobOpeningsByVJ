@@ -5,18 +5,18 @@ A Python automation app that aggregates software job listings and posts a curate
 
 ## Features
 
-- **Multi-Platform**: Scrapes RemoteOK, WeWorkRemotely, and is extensible.
+- **Multi-Platform**: Scrapes Google Jobs (via SerpApi), RemoteOK, WeWorkRemotely, Remotive, and Working Nomads.
 - **Smart Curation**:
-  - Max 30 jobs per day.
-  - Balances Remote (15) and India (15) roles.
+  - NO LIMIT on jobs per day (posts all relevant recent jobs).
+  - Categorizes into "Remote" vs "India".
   - Filters for recent posts (last 24h).
   - Deduplicates listings.
 - **Telegram Logic**:
-  - Posts a single, tidy message within 4096 char limit.
-  - Pins the latest digest.
+  - Posts a single message (trimmed if needed) or multiple.
+  - No pinning, clean footer.
   - Uses specific "🌍" and "🇮🇳" indicators.
 - **Reliability**:
-  - Uses `APScheduler` for precise timing (default 4:00 PM IST).
+  - Uses `APScheduler` for precise timing.
   - Lock file prevents overlapping runs.
   - Automatic retries and error logging.
 
@@ -35,7 +35,7 @@ A Python automation app that aggregates software job listings and posts a curate
    
    - `TELEGRAM_BOT_TOKEN`: From @BotFather
    - `TELEGRAM_CHANNEL_ID`: Channel ID
-   - `RUN_TIME_UTC`: Default 10:30 (4:00 PM IST)
+   - `SERPAPI_KEY`: API Key from serpapi.com (crucial for India jobs)
 
 3. **Run**:
    
@@ -49,12 +49,9 @@ A Python automation app that aggregates software job listings and posts a curate
    python run.py --run-once
    ```
 
-## Deployment
+## Deployment with GitHub Actions
 
-To run via system cron (if not using the internal scheduler):
-```bash
-30 10 * * * cd /path/to/project && /path/to/venv/bin/python run.py --run-once >> cron.log 2>&1
-```
-
-## Adding Scrapers
-Implement `src.scrapers.base.JobScraper` and add to `src/main.py`.
+1. Create a repo `JobOpeningsByVJ`.
+2. Push this code.
+3. Add Secrets: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHANNEL_ID`, `TELEGRAM_ADMIN_CHAT_ID`, `SERPAPI_KEY`.
+4. It will run automatically at 10:30 UTC every day.
