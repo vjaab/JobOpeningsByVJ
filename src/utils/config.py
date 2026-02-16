@@ -16,5 +16,5 @@ ROLES = ["developer", "tester", "devops"]
 
 # Scraper Settings (Hardcoded)
 SCRAPER_DELAY_SECONDS = 3
-# Limits removed as requested by user
+RUN_TIME_UTC = "10:30"
 LOG_LEVEL = "INFO"

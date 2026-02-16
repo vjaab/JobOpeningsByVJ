@@ -12,7 +12,6 @@ from apscheduler.triggers.cron import CronTrigger
 from src.utils.config import (
     TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL_ID, TELEGRAM_ADMIN_CHAT_ID,
     TARGET_LOCATIONS, ROLES, SCRAPER_DELAY_SECONDS,
-    MAX_JOBS_PER_DAY, MAX_REMOTE_JOBS, MAX_INDIA_JOBS,
     RUN_TIME_UTC, LOG_LEVEL
 )
 from src.utils.telegram_bot import TelegramBot

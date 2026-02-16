@@ -2,7 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 from .base import JobScraper
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 class WorkingNomadsScraper(JobScraper):
