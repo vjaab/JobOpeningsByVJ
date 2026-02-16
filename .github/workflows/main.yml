@@ -32,11 +32,7 @@ jobs:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
         TELEGRAM_ADMIN_CHAT_ID: ${{ secrets.TELEGRAM_ADMIN_CHAT_ID }}
-        TARGET_LOCATIONS: ${{ vars.TARGET_LOCATIONS }}
-        ROLES: ${{ vars.ROLES }}
-        MAX_JOBS_PER_DAY: 30
-        MAX_REMOTE_JOBS: 15
-        MAX_INDIA_JOBS: 15
+        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
         RUN_TIME_UTC: 10:30
         LOG_LEVEL: INFO
       run: |
