@@ -117,7 +117,9 @@ def run_job_scraping():
         # For now, let's assume they might not, and rely on scrape order (which is usually recent first)
         # But let's try to add a 'created_at' timestamp if possible
         
-        unique_jobs.sort(key=lambda x: x.get('posted_dt', datetime.min).timestamp(), reverse=True)
+        # unique_jobs.sort(key=lambda x: x.get('posted_dt', datetime.min).timestamp(), reverse=True)
+        # Fix datetime.min timestamp issue
+        unique_jobs.sort(key=lambda x: x.get('posted_dt', datetime(1970, 1, 1).replace(tzinfo=timezone.utc)).timestamp(), reverse=True)
         
         remote_candidates = [j for j in unique_jobs if "remote" in j['location'].lower()]
         india_candidates = [j for j in unique_jobs if "remote" not in j['location'].lower()]
@@ -170,7 +172,7 @@ def run_job_scraping():
         
         # Build Message
         header = f"🚀 *Daily Tech Jobs Digest by VJ — {date_str}*\n\n"
-        footer = f"\nUpdated daily at 4:00 PM IST | 🌍 {len(display_remote)} Remote | 🇮🇳 {len(display_india)} India | Total: {len(final_jobs)} jobs"
+        footer = f"\n🌍 {len(display_remote)} Remote | 🇮🇳 {len(display_india)} India | Total: {len(final_jobs)} jobs"
 
         message_body = ""
         
@@ -245,7 +247,7 @@ def run_job_scraping():
         response = bot.send_message(full_message)
         if response and response.get('ok'):
              # Pin
-            bot.pin_message(response['result']['message_id'])
+            pass # bot.pin_message(response['result']['message_id'])
             
         logging.info("Job scrape cycle completed successfully.")
 
