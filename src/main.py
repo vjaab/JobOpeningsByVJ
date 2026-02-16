@@ -121,8 +121,15 @@ def run_job_scraping():
         # Fix datetime.min timestamp issue
         unique_jobs.sort(key=lambda x: x.get('posted_dt', datetime(1970, 1, 1).replace(tzinfo=timezone.utc)).timestamp(), reverse=True)
         
-        remote_candidates = [j for j in unique_jobs if "remote" in j['location'].lower()]
-        india_candidates = [j for j in unique_jobs if "remote" not in j['location'].lower()]
+        
+        # Logic to split candidates
+        def is_india_role(job):
+            loc = job['location'].lower()
+            return "india" in loc or any(city in loc for city in ["bangalore", "bengaluru", "hyderabad", "mumbai", "chennai", "delhi", "pune", "guegaon", "noida"])
+
+        india_candidates = [j for j in unique_jobs if is_india_role(j)]
+        remote_candidates = [j for j in unique_jobs if not is_india_role(j) and "remote" in j['location'].lower()]
+
 
         final_remote_jobs = []
         final_india_jobs = []
@@ -165,8 +172,8 @@ def run_job_scraping():
         final_jobs.sort(key=sort_key_display)
 
         # 5. Format Output
-        display_remote = [j for j in final_jobs if "remote" in j['location'].lower()]
-        display_india = [j for j in final_jobs if "remote" not in j['location'].lower()]
+        display_india = [j for j in final_jobs if is_india_role(j)]
+        display_remote = [j for j in final_jobs if j not in display_india] # Remaining are remote
         
         date_str = datetime.now().strftime("%d %b %Y")
         
