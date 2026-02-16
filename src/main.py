@@ -140,7 +140,28 @@ def run_job_scraping():
         # But we still sort/split for display purposes
         
         # Combine everything (no capping logic needed anymore)
-        final_jobs = india_candidates + remote_candidates
+        all_candidates = india_candidates + remote_candidates
+        
+        # Priority and Company Capping Logic
+        # 1. Sort by Priority (Developer > Others)
+        def get_priority_score(job):
+            role = job['role'].lower()
+            if any(k in role for k in ["developer", "software engineer", "sde", "backend", "frontend", "full stack"]):
+                return 0 # High priority
+            return 1 # Lower priority
+            
+        all_candidates.sort(key=lambda x: (get_priority_score(x), x.get('company')))
+
+        # 2. Cap per company (Max 5)
+        company_counts = {}
+        final_jobs = []
+        for job in all_candidates:
+            company = job['company']
+            count = company_counts.get(company, 0)
+            if count >= 5:
+                continue
+            company_counts[company] = count + 1
+            final_jobs.append(job)
         
         # Mark as posted
         for job in final_jobs:
@@ -166,85 +187,68 @@ def run_job_scraping():
         
         date_str = datetime.now().strftime("%d %b %Y")
         
-        # Build Message
+        # Build Messages (Multi-part)
         header = f"🚀 *Daily Tech Jobs Digest by VJ — {date_str}*\n\n"
         footer = f"\n🌍 {len(display_remote)} Remote | 🇮🇳 {len(display_india)} India | Total: {len(final_jobs)} jobs"
 
-        message_body = ""
-        
-        def format_job_entry(job):
-            # Truncate title
-            title = job['role']
-            if len(title) > 60:
-                title = title[:57] + "..."
+        messages = []
+        current_message = header
+
+        def add_text_to_messages(new_text, section_title=None, is_footer=False, is_job=False):
+            nonlocal current_message, messages
             
-            flag = "🌍" if "remote" in job['location'].lower() else "🇮🇳" # Or use job.get('flag')
-            
-            # Calculate posted time string
-            posted_str = get_posted_time_str(job.get('posted_dt'))
-            
-            return (
-                f"*{title}*\n"
-                f"🏢 {job['company']}\n"
-                f"{flag} {job['location']}\n"
-                f"🕐 {posted_str}\n"
-                f"💰 {job['salary']}\n"
-                f"🔗 [Apply Now]({job['url']})\n"
-                f"🏷️ {job['source']}\n\n"
-            )
+            # If section title provided
+            if section_title:
+                text_to_add = section_title
+            else:
+                text_to_add = new_text
+
+            # Check length safety (Telegram limit ~4096)
+            if len(current_message) + len(text_to_add) > 3800:
+                messages.append(current_message)
+                if is_footer:
+                     # Footer should be on new message if doesn't fit
+                     current_message = text_to_add
+                elif section_title:
+                     # New section starts on new message
+                     current_message = text_to_add
+                elif is_job:
+                     # Continuation header for job liist
+                     current_message = f"*(Continuation)*\n\n{text_to_add}"
+                else:
+                     current_message = text_to_add
+            else:
+                current_message += text_to_add
 
         if display_remote:
-            message_body += "🌍 *REMOTE ROLES*\n──────────────\n"
+            add_text_to_messages("", section_title="🌍 *REMOTE ROLES*\n──────────────\n")
             for job in display_remote:
-                message_body += format_job_entry(job)
+                add_text_to_messages(format_job_entry(job), is_job=True)
 
         if display_india:
+            # Separator if needed
             if display_remote:
-                message_body += "\n"
-            message_body += "🇮🇳 *INDIA ROLES*\n──────────────\n"
-            for job in display_india:
-                message_body += format_job_entry(job)
-
-        full_message = header + message_body + footer
-        
-        # 6. Send (with trimming if needed)
-        # Telegram limit is 4096 chars.
-        # If too long, we might need to cut jobs.
-        if len(full_message) > 4000:
-             # Trim jobs from end until it fits
-             # This is a bit complex to do perfectly with markdown.
-             # Simple approach: If > 4000, send multiple messages or just truncate the body.
-             # User requested: "Single message only — trim content to fit Telegram's 4096 char limit"
-             
-             # We must fit it.
-             while len(full_message) > 4000 and (display_remote or display_india):
-                 # Remove last job from whichever list is at the bottom (India usually)
-                 if display_india:
-                     display_india.pop()
-                 elif display_remote:
-                     display_remote.pop()
-                 
-                 # Reconstruct
-                 message_body = ""
-                 if display_remote:
-                     message_body += "🌍 *REMOTE ROLES*\n──────────────\n"
-                     for job in display_remote:
-                         message_body += format_job_entry(job)
-                 if display_india:
-                    if display_remote:
-                        message_body += "\n"
-                    message_body += "🇮🇳 *INDIA ROLES*\n──────────────\n"
-                    for job in display_india:
-                        message_body += format_job_entry(job)
-                        
-                 full_message = header + message_body + footer
-
-        # Send
-        response = bot.send_message(full_message)
-        if response and response.get('ok'):
-             # Pin
-            pass # bot.pin_message(response['result']['message_id'])
+                add_text_to_messages("\n")
             
+            add_text_to_messages("", section_title="🇮🇳 *INDIA ROLES*\n──────────────\n")
+            for job in display_india:
+                add_text_to_messages(format_job_entry(job), is_job=True)
+
+        # Add footer
+        add_text_to_messages(footer, is_footer=True)
+        
+        # Append final message
+        if current_message:
+            messages.append(current_message)
+        
+        # 6. Send All Messages
+        for msg in messages:
+            response = bot.send_message(msg)
+            if not (response and response.get('ok')):
+                 logging.error(f"Failed to send message part: {response}")
+            import time
+            time.sleep(1) # Rate limit
+
         logging.info("Job scrape cycle completed successfully.")
 
     finally:
