@@ -277,6 +277,87 @@ def run_job_scraping():
 
         logging.info("Job scrape cycle completed successfully.")
 
+        # 7. WhatsApp Logic
+        from src.utils.whatsapp_bot import send_whatsapp_message
+        
+        wa_messages = []
+        wa_current_message = header 
+        
+        def format_job_entry_wa(job):
+            # Truncate title
+            title = job['role']
+            if len(title) > 60:
+                title = title[:57] + "..."
+            
+            flag = "🌍" if "remote" in job['location'].lower() else "🇮🇳"
+            
+            # Calculate posted time string
+            posted_str = get_posted_time_str(job.get('posted_dt'))
+            
+            # Basic salary if missing
+            salary = job.get('salary', 'Not disclosed')
+            if not salary: salary = 'Not disclosed'
+
+            # WhatsApp uses plain text URL
+            return (
+                f"*{title}*\n"
+                f"🏢 {job['company']}\n"
+                f"{flag} {job['location']}\n"
+                f"🕐 {posted_str}\n"
+                f"💰 {salary}\n"
+                f"🔗 Apply: {job['url']}\n"
+                f"🏷️ {job['source']}\n\n"
+            )
+
+        def add_text_wa(new_text, section_title=None, is_footer=False, is_job=False):
+            nonlocal wa_current_message, wa_messages
+            
+            if section_title:
+                text_to_add = section_title
+            else:
+                text_to_add = new_text
+
+            # WhatsApp limit ~4000
+            if len(wa_current_message) + len(text_to_add) > 3800:
+                wa_messages.append(wa_current_message)
+                if is_footer:
+                     wa_current_message = text_to_add
+                elif section_title:
+                     wa_current_message = text_to_add
+                elif is_job:
+                     wa_current_message = f"*(Continuation)*\n\n{text_to_add}"
+                else:
+                     wa_current_message = text_to_add
+            else:
+                wa_current_message += text_to_add
+
+        if display_remote:
+            add_text_wa("", section_title="🌍 *REMOTE ROLES*\n──────────────\n")
+            for job in display_remote:
+                add_text_wa(format_job_entry_wa(job), is_job=True)
+
+        if display_india:
+            if display_remote:
+                add_text_wa("\n")
+            
+            add_text_wa("", section_title="🇮🇳 *INDIA ROLES*\n──────────────\n")
+            for job in display_india:
+                add_text_wa(format_job_entry_wa(job), is_job=True)
+
+        # Add footer
+        add_text_wa(footer, is_footer=True)
+        
+        # Append final message
+        if wa_current_message:
+            wa_messages.append(wa_current_message)
+        
+        # Send All WhatsApp Messages
+        for msg in wa_messages:
+            send_whatsapp_message(msg)
+            time.sleep(1) 
+
+        logging.info("WhatsApp delivery cycle completed.")
+
     finally:
         fcntl.lockf(lock_fd, fcntl.LOCK_UN)
         lock_fd.close()
