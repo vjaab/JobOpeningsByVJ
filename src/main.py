@@ -210,15 +210,24 @@ def run_job_scraping():
             salary = job.get('salary', 'Not disclosed')
             if not salary: salary = 'Not disclosed'
 
-            return (
-                f"*{title}*\n"
-                f"🏢 {job['company']}\n"
-                f"{flag} {job['location']}\n"
-                f"🕐 {posted_str}\n"
-                f"💰 {salary}\n"
-                f"🔗 [Apply Now]({job['url']})\n"
-                f"🏷️ {job['source']}\n\n"
-            )
+            msg_parts = [
+                f"*{title}*",
+                f"🏢 {job['company']}",
+                f"{flag} {job['location']}"
+            ]
+            
+            if posted_str != "recently":
+                msg_parts.append(f"🕐 {posted_str}")
+                
+            if salary != "Not disclosed":
+                msg_parts.append(f"💰 {salary}")
+                
+            msg_parts.append(f"🔗 [Apply Now]({job['url']})")
+            
+            if job['source'] != "Google Jobs":
+                msg_parts.append(f"🏷️ {job['source']}")
+
+            return "\n".join(msg_parts) + "\n\n"
 
         def add_text_to_messages(new_text, section_title=None, is_footer=False, is_job=False):
             nonlocal current_message, messages
@@ -298,16 +307,24 @@ def run_job_scraping():
             salary = job.get('salary', 'Not disclosed')
             if not salary: salary = 'Not disclosed'
 
-            # WhatsApp uses plain text URL
-            return (
-                f"*{title}*\n"
-                f"🏢 {job['company']}\n"
-                f"{flag} {job['location']}\n"
-                f"🕐 {posted_str}\n"
-                f"💰 {salary}\n"
-                f"🔗 Apply: {job['url']}\n"
-                f"🏷️ {job['source']}\n\n"
-            )
+            msg_parts = [
+                f"*{title}*",
+                f"🏢 {job['company']}",
+                f"{flag} {job['location']}"
+            ]
+            
+            if posted_str != "recently":
+                msg_parts.append(f"🕐 {posted_str}")
+                
+            if salary != "Not disclosed":
+                msg_parts.append(f"💰 {salary}")
+                
+            msg_parts.append(f"🔗 Apply: {job['url']}")
+            
+            if job['source'] != "Google Jobs":
+                msg_parts.append(f"🏷️ {job['source']}")
+
+            return "\n".join(msg_parts) + "\n\n"
 
         def add_text_wa(new_text, section_title=None, is_footer=False, is_job=False):
             nonlocal wa_current_message, wa_messages
