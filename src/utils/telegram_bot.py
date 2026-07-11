@@ -80,3 +80,31 @@ class TelegramBot:
     def send_admin_alert(self, message):
         if self.admin_chat_id:
             self.send_message(f"⚠️ ADMIN ALERT: {message}", chat_id=self.admin_chat_id)
+
+    def send_document(self, file_path, caption=None, chat_id=None, parse_mode='Markdown', retries=3):
+        if not chat_id:
+            chat_id = self.channel_id
+        
+        url = f"https://api.telegram.org/bot{self.token}/sendDocument"
+        
+        for attempt in range(retries):
+            try:
+                with open(file_path, 'rb') as f:
+                    files = {'document': f}
+                    data = {
+                        'chat_id': chat_id,
+                        'parse_mode': parse_mode
+                    }
+                    if caption:
+                        data['caption'] = caption
+                    
+                    response = requests.post(url, data=data, files=files, timeout=30)
+                    response.raise_for_status()
+                    return response.json()
+            except requests.exceptions.RequestException as e:
+                logging.warning(f"Failed to send document (attempt {attempt+1}/{retries}): {e}")
+                time.sleep(2 ** attempt)
+        
+        logging.error(f"Failed to send Telegram document after {retries} attempts")
+        return None
+

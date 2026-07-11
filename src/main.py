@@ -24,6 +24,8 @@ from src.scrapers.remotive import RemotiveScraper
 from src.scrapers.workingnomads import WorkingNomadsScraper
 from src.scrapers.google_jobs import GoogleJobsScraper
 # Add more scrapers here when implemented
+from src.agents.interview_agent import InterviewPrepAgent
+
 
 # Setup logging
 logging.basicConfig(
@@ -374,6 +376,14 @@ def run_job_scraping():
             time.sleep(1) 
 
         logging.info("WhatsApp delivery cycle completed.")
+
+        # Trigger Daily Interview Prep Agent
+        try:
+            logging.info("Triggering Daily Interview Preparation Agent...")
+            agent = InterviewPrepAgent()
+            agent.execute_daily_run()
+        except Exception as e:
+            logging.error(f"Failed to run Daily Interview Prep Agent: {e}", exc_info=True)
 
     finally:
         fcntl.lockf(lock_fd, fcntl.LOCK_UN)

@@ -64,3 +64,88 @@ def send_whatsapp_message(message):
             success = False
             
     return success
+
+def upload_media(file_path):
+    """
+    Uploads a local file to WhatsApp/Facebook Graph API and returns its media_id.
+    """
+    if not WHATSAPP_TOKEN or not WHATSAPP_PHONE_ID:
+        logger.error("WhatsApp config missing. Skipping upload.")
+        return None
+
+    # Note that WhatsApp media upload endpoint uses the phone ID
+    url = f"https://graph.facebook.com/v22.0/{WHATSAPP_PHONE_ID}/media"
+    headers = {
+        'Authorization': f'Bearer {WHATSAPP_TOKEN}'
+    }
+    
+    import os
+    filename = os.path.basename(file_path)
+    
+    try:
+        with open(file_path, 'rb') as f:
+            files = {
+                'file': (filename, f, 'application/pdf')
+            }
+            data = {
+                'messaging_product': 'whatsapp'
+            }
+            response = requests.post(url, headers=headers, files=files, data=data, timeout=30)
+            if response.status_code in [200, 201]:
+                media_id = response.json().get('id')
+                logger.info(f"WhatsApp media upload successful. ID: {media_id}")
+                return media_id
+            else:
+                logger.error(f"WhatsApp Media Upload Failed: {response.status_code} - {response.text}")
+                return None
+    except Exception as e:
+        logger.error(f"WhatsApp Media Upload Error: {e}")
+        return None
+
+def send_whatsapp_document(media_id, filename):
+    """
+    Sends a document message using a WhatsApp media ID.
+    """
+    if not WHATSAPP_TOKEN or not WHATSAPP_PHONE_ID or not WHATSAPP_RECIPIENT:
+        logger.error("WhatsApp config missing. Skipping send.")
+        return False
+
+    url = f"https://graph.facebook.com/v22.0/{WHATSAPP_PHONE_ID}/messages"
+    headers = {
+        'Authorization': f'Bearer {WHATSAPP_TOKEN}',
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": WHATSAPP_RECIPIENT,
+        "type": "document",
+        "document": {
+            "id": media_id,
+            "filename": filename
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        if response.status_code in [200, 201]:
+            logger.info("WhatsApp document sent successfully")
+            return True
+        else:
+            logger.error(f"WhatsApp Document Send Failed: {response.status_code} - {response.text}")
+            return False
+    except Exception as e:
+        logger.error(f"WhatsApp Document Send Error: {e}")
+        return False
+
+def send_whatsapp_file(file_path):
+    """
+    Uploads and sends a file via WhatsApp.
+    """
+    import os
+    media_id = upload_media(file_path)
+    if media_id:
+        return send_whatsapp_document(media_id, os.path.basename(file_path))
+    return False
+
